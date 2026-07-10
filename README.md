@@ -64,7 +64,7 @@ cd chronic_disease_agent
 ```bash
 # Windows
 python -m venv venv
-venv\Scripts\activate
+> .venv\Scripts\activate
 
 # macOS / Linux
 python3 -m venv venv
@@ -74,6 +74,7 @@ source venv/bin/activate
 ### 4. Install dependencies
 
 ```bash
+$ pip install Flask
 pip install -r requirements.txt
 ```
 
