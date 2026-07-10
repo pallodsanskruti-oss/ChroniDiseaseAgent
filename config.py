@@ -13,6 +13,7 @@ class Config:
     DEBUG: bool = os.getenv("FLASK_DEBUG", "False").lower() == "true"
     HOST: str = os.getenv("APP_HOST", "0.0.0.0")
     PORT: int = int(os.getenv("APP_PORT", 5000))
+    > .venv\Scripts\activate
 
     # ── IBM Watsonx.ai ─────────────────────────────────────────────────────
     IBM_API_KEY: str = os.getenv("IBM_API_KEY", "")
