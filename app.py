@@ -20,6 +20,7 @@ from models import (
 )
 from agent_instructions import build_system_prompt
 from watsonx_client import query_watsonx
+$ pip install Flask
 
 app = Flask(__name__)
 app.secret_key = Config.SECRET_KEY
