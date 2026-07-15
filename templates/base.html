@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CareGuard AI{% endblock %} — Chronic Disease Monitor</title>
+  <meta name="description" content="CareGuard AI: AI-powered chronic disease monitoring with IBM Watsonx.ai Granite models.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫀</text></svg>">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <!-- App CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Sidebar ───────────────────────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+  <a class="sidebar-brand" href="{{ url_for('dashboard') }}">
+    <div class="brand-icon">🫀</div>
+    <div>
+      <div class="brand-name">CareGuard AI</div>
+      <div class="brand-sub">Chronic Disease Monitor</div>
+    </div>
+  </a>
+
+  <span class="nav-section-label">Main</span>
+  <a href="{{ url_for('dashboard') }}"       class="nav-item {% if page=='dashboard' %}active{% endif %}">
+    <span class="nav-icon">📊</span> Dashboard
+  </a>
+  <a href="{{ url_for('chat') }}"            class="nav-item {% if page=='chat' %}active{% endif %}">
+    <span class="nav-icon">🤖</span> AI Chat
+  </a>
+
+  <span class="nav-section-label">Health</span>
+  <a href="{{ url_for('patient_profile') }}" class="nav-item {% if page=='profile' %}active{% endif %}">
+    <span class="nav-icon">👤</span> Patient Profile
+  </a>
+  <a href="{{ url_for('medications') }}"     class="nav-item {% if page=='medications' %}active{% endif %}">
+    <span class="nav-icon">💊</span> Medications
+  </a>
+  <a href="{{ url_for('caregivers') }}"      class="nav-item {% if page=='caregivers' %}active{% endif %}">
+    <span class="nav-icon">👨‍⚕️</span> Care Team
+  </a>
+
+  <div class="sidebar-footer">
+    <a href="{{ url_for('api_reset_demo') }}" class="nav-item" onclick="return confirm('Reset demo session?')">
+      <span class="nav-icon">🔄</span> Reset Demo
+    </a>
+    <div class="nav-item text-muted" style="cursor:default;font-size:11px;padding:6px 12px;">
+      🔒 Session-scoped • Not medical advice
+    </div>
+  </div>
+</aside>
+
+<!-- ── Main ─────────────────────────────────────────────────────────────── -->
+<div class="main-content">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div>
+      <div class="page-title">{% block page_title %}CareGuard AI{% endblock %}</div>
+      <div class="page-subtitle">{% block page_subtitle %}{% endblock %}</div>
+    </div>
+    <div class="topbar-actions">
+      <span class="live-dot" title="System active"></span>
+      <span style="font-size:12px;color:var(--clr-muted);margin-right:4px;">Live</span>
+      <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--clr-accent),var(--clr-accent2));display:flex;align-items:center;justify-content:center;font-size:14px;">
+        {{ patient.name[0] if patient is defined else '?' }}
+      </div>
+    </div>
+  </header>
+
+  <!-- Page body -->
+  <main class="page-body">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- App JS -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

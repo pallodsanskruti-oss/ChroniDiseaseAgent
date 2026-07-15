@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Profile{% endblock %}
+{% block page_title %}Patient Profile{% endblock %}
+{% block page_subtitle %}Update {{ patient.name }}'s medical profile · Changes apply immediately to AI responses{% endblock %}
+
+{% block content %}
+
+<form onsubmit="saveProfile(event)">
+<div class="grid-2" style="margin-bottom:20px;">
+
+  <!-- Demographics -->
+  <div class="card">
+    <div class="card-title">👤 Demographics</div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" name="name" value="{{ patient.name }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Age</label>
+        <input class="form-input" name="age" type="number" value="{{ patient.age }}" min="1" max="120" required>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <select class="form-input" name="gender">
+          {% for g in ['Male','Female','Non-binary','Prefer not to say'] %}
+          <option {% if patient.gender == g %}selected{% endif %}>{{ g }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blood Group</label>
+        <select class="form-input" name="blood_group">
+          {% for bg in ['A+','A-','B+','B-','AB+','AB-','O+','O-'] %}
+          <option {% if patient.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Weight (kg)</label>
+        <input class="form-input" name="weight_kg" type="number" step="0.1" value="{{ patient.weight_kg }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Height (cm)</label>
+        <input class="form-input" name="height_cm" type="number" step="0.1" value="{{ patient.height_cm }}">
+      </div>
+    </div>
+
+    <!-- BMI display -->
+    <div style="background:var(--clr-surface2);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;color:var(--clr-muted);">Calculated BMI</span>
+      <span class="risk-badge {% if bmi_cat == 'Normal' %}risk-LOW{% elif bmi_cat == 'Overweight' %}risk-MODERATE{% elif bmi_cat == 'Obese' %}risk-HIGH{% else %}risk-MODERATE{% endif %}">
+        {{ bmi }} — {{ bmi_cat }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Medical history -->
+  <div class="card">
+    <div class="card-title">🏥 Medical History</div>
+
+    <div class="form-group">
+      <label class="form-label">Existing Conditions (comma-separated)</label>
+      <input class="form-input" name="existing_conditions" value="{{ patient.existing_conditions | join(', ') }}">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Current Medications (comma-separated)</label>
+      <input class="form-input" name="current_medications" value="{{ patient.current_medications | join(', ') }}">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Known Allergies (comma-separated)</label>
+      <input class="form-input" name="allergies" value="{{ patient.allergies | join(', ') }}">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Family History (comma-separated)</label>
+      <input class="form-input" name="family_history" value="{{ patient.family_history | join(', ') }}">
+    </div>
+  </div>
+
+</div>
+
+<!-- Emergency contact -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-title">🚨 Emergency Contact</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+    <div class="form-group" style="margin:0;">
+      <label class="form-label">Name</label>
+      <input class="form-input" name="ec_name" value="{{ patient.emergency_contact.name }}">
+    </div>
+    <div class="form-group" style="margin:0;">
+      <label class="form-label">Relation</label>
+      <input class="form-input" name="ec_relation" value="{{ patient.emergency_contact.relation }}">
+    </div>
+    <div class="form-group" style="margin:0;">
+      <label class="form-label">Phone</label>
+      <input class="form-input" name="ec_phone" value="{{ patient.emergency_contact.phone }}" type="tel">
+    </div>
+  </div>
+</div>
+
+<!-- Conditions / Tags preview -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-title">📋 Active Conditions & Allergies</div>
+  <div style="margin-bottom:10px;">
+    {% for c in patient.existing_conditions %}
+    <span class="tag tag-accent">🏥 {{ c }}</span>
+    {% endfor %}
+  </div>
+  <div>
+    {% for a in patient.allergies %}
+    <span class="tag tag-danger">⚠️ {{ a }}</span>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Save button -->
+<div class="flex justify-between items-center">
+  <span style="font-size:12px;color:var(--clr-muted);">⚠️ Changes are session-scoped and not persisted to a database.</span>
+  <button type="submit" class="btn btn-primary">💾 Save Profile</button>
+</div>
+
+</form>
+{% endblock %}

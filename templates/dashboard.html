@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Health Dashboard{% endblock %}
+{% block page_subtitle %}Real-time vitals for {{ patient.name }} · Last updated just now{% endblock %}
+
+{% block content %}
+
+<!-- Risk + Quick stats -->
+<div class="flex items-center justify-between mt-4" style="margin-bottom:20px;">
+  <div class="flex items-center gap-8">
+    <span class="risk-badge risk-{{ risk.label }}" id="risk-badge">● {{ risk.label }} — {{ risk.score }}/100</span>
+    <span style="font-size:13px;color:var(--clr-muted);">BMI {{ bmi }} — {{ bmi_cat }}</span>
+  </div>
+  <div class="flex gap-8">
+    <button class="btn btn-primary" id="analyze-btn" onclick="triggerAnalysis()">🔍 Run AI Analysis</button>
+    <button class="btn btn-secondary btn-sm" onclick="refreshVitals()">🔄 Refresh</button>
+  </div>
+</div>
+
+<!-- Vitals grid -->
+<div class="vitals-grid" style="margin-bottom:24px;">
+
+  <div class="vital-card" style="--vital-color:#ef4444;">
+    <div class="vital-label">Heart Rate</div>
+    <div class="vital-value" id="live-hr">{{ reading.heart_rate }}</div>
+    <div class="vital-unit">bpm</div>
+    <div class="vital-icon">❤️</div>
+  </div>
+
+  <div class="vital-card" style="--vital-color:#f97316;">
+    <div class="vital-label">Blood Pressure</div>
+    <div class="vital-value" id="live-bp" style="font-size:22px;">{{ reading.systolic_bp }}/{{ reading.diastolic_bp }}</div>
+    <div class="vital-unit">mmHg</div>
+    <div class="vital-icon">🩺</div>
+  </div>
+
+  <div class="vital-card" style="--vital-color:#7c6af7;">
+    <div class="vital-label">Blood Glucose</div>
+    <div class="vital-value" id="live-glucose">{{ reading.blood_glucose }}</div>
+    <div class="vital-unit">mg/dL</div>
+    <div class="vital-icon">🩸</div>
+  </div>
+
+  <div class="vital-card" style="--vital-color:#4fc3f7;">
+    <div class="vital-label">SpO₂</div>
+    <div class="vital-value" id="live-spo2">{{ reading.spo2 }}</div>
+    <div class="vital-unit">%</div>
+    <div class="vital-icon">💧</div>
+  </div>
+
+  <div class="vital-card" style="--vital-color:#22c55e;">
+    <div class="vital-label">Temperature</div>
+    <div class="vital-value" id="live-temp">{{ reading.temperature }}°C</div>
+    <div class="vital-unit">Body Temp</div>
+    <div class="vital-icon">🌡️</div>
+  </div>
+
+  <div class="vital-card" style="--vital-color:#eab308;">
+    <div class="vital-label">Daily Steps</div>
+    <div class="vital-value" id="live-steps" style="font-size:22px;">{{ reading.steps | int }}</div>
+    <div class="vital-unit">steps today</div>
+    <div class="vital-icon">🚶</div>
+  </div>
+
+  <div class="vital-card" style="--vital-color:#a855f7;">
+    <div class="vital-label">Sleep</div>
+    <div class="vital-value" id="live-sleep">{{ reading.sleep_hours }}h</div>
+    <div class="vital-unit">last night</div>
+    <div class="vital-icon">🌙</div>
+  </div>
+
+  <div class="vital-card" style="--vital-color:#ec4899;">
+    <div class="vital-label">Stress Index</div>
+    <div class="vital-value" id="live-stress">{{ reading.stress_index }}</div>
+    <div class="vital-unit">/ 100</div>
+    <div class="vital-icon">🧠</div>
+  </div>
+
+</div>
+
+<!-- Charts + Meds row -->
+<div class="grid-2" style="margin-bottom:24px;">
+
+  <!-- Trend chart -->
+  <div class="card">
+    <div class="section-header">
+      <div class="card-title">7-Day Vitals Trend</div>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Today's medications -->
+  <div class="card">
+    <div class="section-header">
+      <div class="card-title">Today's Medications</div>
+      <a href="{{ url_for('medications') }}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    {% for med in meds %}
+    <div class="med-card" style="--med-color:{{ med.color }};margin-bottom:12px;">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="med-name">{{ med.name }}</div>
+          <div class="med-freq">{{ med.frequency }} · Next: {{ med.next_dose }}</div>
+        </div>
+        <span class="badge {% if med.adherence >= 90 %}badge-full{% else %}badge-limited{% endif %}">{{ med.adherence }}%</span>
+      </div>
+      <div class="adherence-bar"><div class="adherence-fill" style="width:{{ med.adherence }}%;background:{{ med.color }};"></div></div>
+      <div class="flex justify-between">
+        <span class="adherence-pct">Adherence</span>
+        <span class="text-muted" style="font-size:11px;">Refill in {{ med.refill_days }} days</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- AI Analysis output -->
+<div class="card" id="analysis-card" style="display:none;">
+  <div class="section-header">
+    <div class="card-title">🤖 AI Health Analysis</div>
+    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('analysis-card').style.display='none'">✕ Close</button>
+  </div>
+  <div id="analysis-output" style="font-size:14px;line-height:1.7;"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show analysis card when analysis runs
+const _origTrigger = triggerAnalysis;
+async function triggerAnalysis() {
+  document.getElementById('analysis-card').style.display = 'block';
+  await _origTrigger();
+}
+
+// Chart.js — 7-day trend
+const labels   = {{ trend_labels | safe }};
+const glucose  = {{ trend_glucose | safe }};
+const systolic = {{ trend_systolic | safe }};
+const hr       = {{ trend_hr | safe }};
+
+const isDark = () => document.documentElement.getAttribute('data-theme') !== 'light';
+const gridColor = () => isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+const textColor = () => isDark() ? '#8b92b8' : '#6b7280';
+
+const ctx = document.getElementById('trendChart').getContext('2d');
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Glucose (mg/dL)',
+        data: glucose,
+        borderColor: '#7c6af7',
+        backgroundColor: 'rgba(124,106,247,0.1)',
+        tension: 0.4, fill: true, pointRadius: 3,
+      },
+      {
+        label: 'Systolic BP (mmHg)',
+        data: systolic,
+        borderColor: '#f97316',
+        backgroundColor: 'rgba(249,115,22,0.07)',
+        tension: 0.4, fill: true, pointRadius: 3,
+      },
+      {
+        label: 'Heart Rate (bpm)',
+        data: hr,
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239,68,68,0.07)',
+        tension: 0.4, fill: true, pointRadius: 3,
+      },
+    ],
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: textColor(), font: { size: 11 }, boxWidth: 12 } },
+    },
+    scales: {
+      x: { grid: { color: gridColor() }, ticks: { color: textColor(), font: { size: 11 } } },
+      y: { grid: { color: gridColor() }, ticks: { color: textColor(), font: { size: 11 } } },
+    },
+  },
+});
+
+// Re-style chart on theme toggle
+const origToggle = toggleTheme;
+window.toggleTheme = function() {
+  origToggle();
+  setTimeout(() => {
+    chart.options.plugins.legend.labels.color = textColor();
+    chart.options.scales.x.ticks.color = textColor();
+    chart.options.scales.y.ticks.color = textColor();
+    chart.options.scales.x.grid.color  = gridColor();
+    chart.options.scales.y.grid.color  = gridColor();
+    chart.update();
+  }, 50);
+};
+</script>
+{% endblock %}

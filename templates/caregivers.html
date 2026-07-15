@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Care Team{% endblock %}
+{% block page_title %}Care Team{% endblock %}
+{% block page_subtitle %}Family members & medical professionals with access to {{ patient.name }}'s records{% endblock %}
+
+{% block content %}
+
+<div class="section-header" style="margin-bottom:20px;">
+  <div style="font-size:13px;color:var(--clr-muted);">{{ caregivers | length }} care team member(s) registered</div>
+</div>
+
+{% if caregivers %}
+<div class="grid-2" style="margin-bottom:24px;">
+  {% for cg in caregivers %}
+  <div class="caregiver-card">
+    <div class="caregiver-avatar">{{ cg.name[0].upper() }}</div>
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:15px;">{{ cg.name }}</div>
+      <div style="font-size:13px;color:var(--clr-muted);margin-top:2px;">{{ cg.relation }}</div>
+      <div style="margin-top:8px;">
+        <span class="badge {% if cg.access == 'full' %}badge-full{% else %}badge-limited{% endif %}">
+          {{ '🔓 Full Access' if cg.access == 'full' else '🔒 Limited Access' }}
+        </span>
+      </div>
+    </div>
+    <div style="font-size:24px;">{{ '👨‍⚕️' if 'Dr.' in cg.name or 'Physician' in cg.relation or 'Doctor' in cg.relation else '👨‍👩‍👧' }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:40px;">
+  <div style="font-size:48px;margin-bottom:12px;">👨‍⚕️</div>
+  <div style="font-size:16px;font-weight:600;margin-bottom:8px;">No care team members yet</div>
+  <div style="color:var(--clr-muted);font-size:13px;">Add family members and doctors to your profile to enable shared care access.</div>
+</div>
+{% endif %}
+
+<!-- Emergency contact card -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-title">🚨 Emergency Contact</div>
+  <div class="caregiver-card" style="border:none;padding:0;background:transparent;">
+    <div class="caregiver-avatar" style="background:linear-gradient(135deg,#ef4444,#f97316);">
+      {{ patient.emergency_contact.name[0].upper() if patient.emergency_contact.name else '?' }}
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:15px;">{{ patient.emergency_contact.name or 'Not set' }}</div>
+      <div style="font-size:13px;color:var(--clr-muted);">{{ patient.emergency_contact.relation }}</div>
+      <div style="margin-top:6px;">
+        <a href="tel:{{ patient.emergency_contact.phone }}" class="btn btn-danger btn-sm">
+          📞 {{ patient.emergency_contact.phone or 'No number' }}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Note -->
+<div style="padding:14px 18px;background:var(--clr-surface2);border-radius:var(--radius);border:1px solid var(--clr-border);font-size:13px;color:var(--clr-muted);">
+  💡 To add or update care team members, edit the patient profile. In a production deployment, care team members would receive invitation emails and have role-based access to the monitoring dashboard.
+</div>
+
+{% endblock %}

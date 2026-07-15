@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ code }}{% endblock %}
+{% block page_title %}Error {{ code }}{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-code">{{ code }}</div>
+  <div style="font-size:22px;font-weight:600;">{{ message }}</div>
+  <div style="color:var(--clr-muted);font-size:14px;max-width:400px;text-align:center;">
+    Something went wrong. Please try navigating back to the dashboard or refreshing the page.
+  </div>
+  <div style="display:flex;gap:12px;margin-top:8px;">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">🏠 Go to Dashboard</a>
+    <button class="btn btn-secondary" onclick="history.back()">← Go Back</button>
+  </div>
+</div>
+{% endblock %}
