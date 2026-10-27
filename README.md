@@ -87,7 +87,7 @@ cp .env.example .env
 Edit `.env` and fill in your credentials:
 
 ```env
-IBM_API_KEY=5TmU_DzDNr5HLEBFJ2HT4m7ctMClHQrOV2-oeBeVwKNh
+IBM_API_KEY=your_ibm_api_key_here
 IBM_WATSONX_URL=https://us-south.ml.cloud.ibm.com
 IBM_WATSONX_PROJECT_ID=7b457073-aa3c-4f7d-8379-cd15734d809b
 FLASK_SECRET_KEY=change_this_to_a_random_string
